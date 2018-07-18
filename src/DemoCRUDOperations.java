@@ -32,9 +32,6 @@ public class DemoCRUDOperations {
 
     }
 
-
-
-
     private static void posteaza(long id, String mesaj) throws ClassNotFoundException, SQLException {
 
         // 1. load driver, no longer needed in new versions of JDBC
@@ -86,6 +83,10 @@ public class DemoCRUDOperations {
         }
         System.out.println("");
 
+        rs.close();
+        pSt.close();
+        conn.close();
+
     }
 
     private static void feed(long id) throws ClassNotFoundException, SQLException{
@@ -115,13 +116,69 @@ public class DemoCRUDOperations {
             }
         }
         System.out.println("");
+        rs.close();
+        pSt.close();
+        conn.close();
+    }
 
+    private static void checkFollowers() throws ClassNotFoundException, SQLException{
+        System.out.print("Name of the user: ");
+        String name = new Scanner(System.in).nextLine();
+
+        Class.forName("org.postgresql.Driver");
+
+        final String URL = "jdbc:postgresql://54.93.65.5:5432/flavius8";
+        final String USERNAME = "fasttrackit_dev";
+        final String PASSWORD = "fasttrackit_dev";
+
+        Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+
+        PreparedStatement pSt = conn.prepareStatement("SELECT id FROM login WHERE username=?");
+        pSt.setString(1, name);
+
+        ResultSet rs = pSt.executeQuery();
+
+        long id = 0;
+        while(rs.next()) {
+            id = rs.getLong("id");
+
+
+            pSt = conn.prepareStatement("SELECT l2.username FROM login l1 INNER JOIN followers f ON f.idsta = l1.id INNER JOIN login l2 ON l2.id = f.idfol WHERE l1.id = ?");
+            pSt.setLong(1, id);
+            ResultSet rS2 = pSt.executeQuery();
+            String[] user = new String[1000];
+            int temp = 0;
+            while (rS2.next()) {
+                user[temp] = rS2.getString("username").trim();
+                temp++;
+            }
+
+            pSt = conn.prepareStatement("SELECT username FROM login WHERE id=?");
+            pSt.setLong(1, id);
+            rS2 = pSt.executeQuery();
+
+            while (rS2.next()) {
+                System.out.print("\n" + rS2.getString("username").trim() + " is following: ");
+                for (int i = 0; i < user.length; i++) {
+                    if (user[i] != null) {
+                        System.out.print(user[i] + ", ");
+                    }
+                }
+            }
+            rS2.close();
+            System.out.println("");
+        }
+        System.out.println("");
+
+        rs.close();
+        pSt.close();
+        conn.close();
     }
 
     private static void menu(long id) throws ClassNotFoundException, SQLException {
         int option = 0;
-        while (option != 4) {
-            System.out.print("\n\t\t1.Tweet\n\t\t2.Following\n\t\t3.Feed\n\t\t4.EXIT\n");
+        while (option != 5) {
+            System.out.print("\n\t\t1.Tweet\n\t\t2.Following\n\t\t3.Feed\n\t\t4.Check who a user is following\n\t\t5.EXIT\n");
             System.out.print("\nPlease select an option: ");
             option = new Scanner(System.in).nextByte();
             System.out.println("");
@@ -137,7 +194,8 @@ public class DemoCRUDOperations {
                 case 3:
                     feed(id);
                     break;
-                case 4:
+                case 4: checkFollowers();break;
+                case 5:
                     System.out.println("Goodbye.");break;
                 default:
                     System.out.println("Option not valid.");
@@ -202,59 +260,5 @@ public class DemoCRUDOperations {
             conn.close();
             return id;
         }
-
-
-    private static void demoUpdate() throws ClassNotFoundException, SQLException {
-
-                // 1. load driver, no longer needed in new versions of JDBC
-        Class.forName("org.postgresql.Driver");
-
-        // 2. define connection params to db
-        final String URL = "jdbc:postgresql://54.93.65.5:5432/flavius8";
-        final String USERNAME = "fasttrackit_dev";
-        final String PASSWORD = "fasttrackit_dev";
-
-        // 3. obtain a connection
-        Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-
-        // 4. create a query statement
-        PreparedStatement pSt = conn.prepareStatement("UPDATE login SET username=?, password=? WHERE id=?"); //so we have 3 params
-        pSt.setString(1, "ionelcondor");
-        pSt.setString(2, "password1");
-        pSt.setLong(3, 3);
-
-        // 5. execute a prepared statement
-        int rowsUpdated = pSt.executeUpdate();
-
-        // 6. close the objects
-        pSt.close();
-        conn.close();
-    }
-
-
-    private static void demoDelete() throws ClassNotFoundException, SQLException {
-
-               // 1. load driver, no longer needed in new versions of JDBC
-        Class.forName("org.postgresql.Driver");
-
-        // 2. define connection params to db
-        final String URL = "jdbc:postgresql://54.93.65.5:5432/flavius8";
-        final String USERNAME = "fasttrackit_dev";
-        final String PASSWORD = "fasttrackit_dev";
-
-        // 3. obtain a connection
-        Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-
-        // 4. create a query statement
-        PreparedStatement pSt = conn.prepareStatement("DELETE FROM login WHERE username=?");
-        pSt.setString(1,"marius" );
-
-        // 5. execute a prepared statement
-        int rowsDeleted = pSt.executeUpdate();
-        System.out.println(rowsDeleted + " rows were deleted.");
-        // 6. close the objects
-        pSt.close();
-        conn.close();
-    }
 }
 
